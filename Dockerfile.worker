@@ -1,0 +1,32 @@
+# Stage 1: Dependencies
+FROM node:20-alpine AS deps
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+COPY prisma ./prisma
+RUN npx prisma generate
+
+# Stage 2: Production runner
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Install ffmpeg for video processing
+RUN apk add --no-cache ffmpeg
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/prisma ./prisma
+COPY . .
+
+RUN addgroup --system --gid 1001 worker && \
+    adduser --system --uid 1001 worker
+
+# Create data directories
+RUN mkdir -p /data/photo /data/video /data/processed /data/processed/thumbnails /data/processed/web /data/processed/posters /data/processed/uploads /data/processed/temp && \
+    chown -R worker:worker /data
+
+USER worker
+
+CMD ["npx", "tsx", "scripts/start-worker.ts"]

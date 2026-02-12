@@ -1,0 +1,101 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: yuna
+      POSTGRES_USER: ${DB_USER:-yuna}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-yuna}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${DB_USER:-yuna}:${DB_PASSWORD}@postgres:5432/yuna
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
+      - JWT_ACCESS_EXPIRY=${JWT_ACCESS_EXPIRY:-15m}
+      - JWT_REFRESH_EXPIRY=${JWT_REFRESH_EXPIRY:-7d}
+      - OWNER_EMAIL=${OWNER_EMAIL:-admin@yuna.family}
+      - OWNER_PASSWORD=${OWNER_PASSWORD:-changeme123}
+      - OWNER_NAME=${OWNER_NAME:-Owner}
+      - PROCESSED_MEDIA_PATH=/data/processed
+      - NEXT_TELEMETRY_DISABLED=1
+    ports:
+      - "3000:3000"
+    volumes:
+      - ${SOURCE_PHOTO_PATH:-./data/photo}:/data/photo:ro
+      - ${SOURCE_VIDEO_PATH:-./data/video}:/data/video:ro
+      - processed_media:/data/processed
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${DB_USER:-yuna}:${DB_PASSWORD}@postgres:5432/yuna
+      - REDIS_URL=redis://redis:6379
+      - PROCESSED_MEDIA_PATH=/data/processed
+    volumes:
+      - ${SOURCE_PHOTO_PATH:-./data/photo}:/data/photo:ro
+      - ${SOURCE_VIDEO_PATH:-./data/video}:/data/video:ro
+      - processed_media:/data/processed
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Seed runner - runs once to create initial OWNER account
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-yuna}:${DB_PASSWORD}@postgres:5432/yuna
+      - OWNER_EMAIL=${OWNER_EMAIL:-admin@yuna.family}
+      - OWNER_PASSWORD=${OWNER_PASSWORD:-changeme123}
+      - OWNER_NAME=${OWNER_NAME:-Owner}
+    command: ["npx", "tsx", "prisma/seed.ts"]
+    depends_on:
+      app:
+        condition: service_started
+    restart: "no"
+
+volumes:
+  pgdata:
+  redisdata:
+  processed_media:

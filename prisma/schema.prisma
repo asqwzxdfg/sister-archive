@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  role         Role     @default(VIEWER)
+  approved     Boolean  @default(false)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  media     Media[]
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+model Media {
+  id            String    @id @default(cuid())
+  type          MediaType
+  filename      String
+  originalPath  String    @map("original_path")
+  thumbnailPath String?   @map("thumbnail_path")
+  webPath       String?   @map("web_path")
+  posterPath    String?   @map("poster_path")
+  width         Int?
+  height        Int?
+  size          BigInt
+  mimeType      String    @map("mime_type")
+  hash          String    @unique
+  capturedAt    DateTime? @map("captured_at")
+  storyAt       DateTime? @map("story_at")
+  processed     Boolean   @default(false)
+  uploadedBy    User      @relation(fields: [uploadedById], references: [id])
+  uploadedById  String    @map("uploaded_by_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  events MediaEvent[]
+
+  @@index([capturedAt])
+  @@index([storyAt])
+  @@index([type])
+  @@index([uploadedById])
+  @@map("media")
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  category    String
+  coverPath   String?   @map("cover_path")
+  startDate   DateTime  @map("start_date")
+  endDate     DateTime? @map("end_date")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  media MediaEvent[]
+
+  @@index([startDate])
+  @@index([category])
+  @@map("events")
+}
+
+model MediaEvent {
+  media   Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId String @map("media_id")
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String @map("event_id")
+
+  @@id([mediaId, eventId])
+  @@map("media_events")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId     String?  @map("user_id")
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
