@@ -38,6 +38,7 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
+COPY --from=builder /app/node_modules/prisma/node_modules ./node_modules/prisma/node_modules
 
 # Create data directories
 RUN mkdir -p /data/photo /data/video /data/processed && \
