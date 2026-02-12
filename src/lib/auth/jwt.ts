@@ -1,9 +1,9 @@
-import jwt from 'jsonwebtoken';
+import jwt, { type Secret, type SignOptions } from 'jsonwebtoken';
 import type { Role } from '@prisma/client';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
-const ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || '15m';
-const REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || '7d';
+const JWT_SECRET: Secret = process.env.JWT_SECRET || 'dev-secret-change-me';
+const ACCESS_EXPIRY = (process.env.JWT_ACCESS_EXPIRY ?? '15m') as SignOptions['expiresIn'];
+const REFRESH_EXPIRY = (process.env.JWT_REFRESH_EXPIRY ?? '7d') as SignOptions['expiresIn'];
 
 export interface JwtPayload {
   sub: string;
