@@ -28,7 +28,7 @@ export default function LibraryFolderPage() {
         <p className="text-sm text-muted-foreground">폴더 내 미디어를 시간순으로 표시합니다</p>
       </div>
       <MediaGrid items={data?.items ?? []} isLoading={isLoading} />
-      <MediaLightbox items={data?.items ?? []} />
+      <MediaLightbox />
     </div>
   );
 }
