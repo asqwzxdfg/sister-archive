@@ -8,6 +8,7 @@ interface User {
   name: string;
   role: 'OWNER' | 'EDITOR' | 'VIEWER';
   approved: boolean;
+  createdAt?: string;
 }
 
 interface AuthState {

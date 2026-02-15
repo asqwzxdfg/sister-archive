@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { cn } from '@/lib/utils';
-import { Camera, Calendar, Upload, Settings, LogOut, Menu, X } from 'lucide-react';
+import { Camera, Calendar, Upload, Settings, LogOut, Menu, X, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,6 +16,10 @@ const navItems = [
 
 const editorItems = [
   { href: '/upload', label: '업로드', icon: Upload },
+];
+
+const accountItems = [
+  { href: '/mypage', label: '마이페이지', icon: User },
 ];
 
 const adminItems = [
@@ -34,6 +38,7 @@ export function Header() {
   const allItems = [
     ...navItems,
     ...(isEditor ? editorItems : []),
+    ...accountItems,
     ...(isOwner ? adminItems : []),
   ];
 
