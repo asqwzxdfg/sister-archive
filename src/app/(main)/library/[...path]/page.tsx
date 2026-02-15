@@ -8,13 +8,14 @@ import type { MediaItem } from '@/types/api';
 
 export default function LibraryFolderPage() {
   const params = useParams();
-  const path = Array.isArray(params.path) ? params.path : [params.path];
-  const folderPath = path.map((p) => decodeURIComponent(p)).join('/');
+  const rawPath = Array.isArray(params.path) ? params.path : [params.path];
+  const safeParts = rawPath.filter((p): p is string => typeof p === 'string');
+  const folderPath = safeParts.map((p) => decodeURIComponent(p)).join('/');
 
   const { data, isLoading } = useQuery<{ items: MediaItem[] }>({
     queryKey: ['library-folder', folderPath],
     queryFn: async () => {
-      const res = await fetch(`/api/library/${path.join('/')}`);
+      const res = await fetch(`/api/library/${safeParts.join('/')}`);
       if (!res.ok) throw new Error('Failed to fetch folder');
       return res.json();
     },
