@@ -131,16 +131,17 @@ export function MediaLightbox() {
   if (!currentItem) return null;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
-          onClick={close}
-        >
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+            onClick={close}
+          >
           {/* Top bar */}
           <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4">
             <div className="text-sm text-white/70">
@@ -264,46 +265,47 @@ export function MediaLightbox() {
               />
             )}
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-    <Dialog open={eventDialogOpen} onOpenChange={setEventDialogOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>이벤트 추가</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          {isEventsLoading && (
-            <p className="text-sm text-muted-foreground">이벤트를 불러오는 중...</p>
-          )}
-          {!isEventsLoading && events.length === 0 && (
-            <p className="text-sm text-muted-foreground">등록된 이벤트가 없습니다</p>
-          )}
-          {!isEventsLoading && events.length > 0 && (
-            <div className="max-h-64 space-y-2 overflow-auto rounded-md border p-3">
-              {events.map((event) => (
-                <label key={event.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedEventIds.includes(event.id)}
-                    onChange={() => toggleEventId(event.id)}
-                  />
-                  <span className="text-muted-foreground">{event.category}</span>
-                  <span>{event.title}</span>
-                </label>
-              ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <Dialog open={eventDialogOpen} onOpenChange={setEventDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>이벤트 추가</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {isEventsLoading && (
+              <p className="text-sm text-muted-foreground">이벤트를 불러오는 중...</p>
+            )}
+            {!isEventsLoading && events.length === 0 && (
+              <p className="text-sm text-muted-foreground">등록된 이벤트가 없습니다</p>
+            )}
+            {!isEventsLoading && events.length > 0 && (
+              <div className="max-h-64 space-y-2 overflow-auto rounded-md border p-3">
+                {events.map((event) => (
+                  <label key={event.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={selectedEventIds.includes(event.id)}
+                      onChange={() => toggleEventId(event.id)}
+                    />
+                    <span className="text-muted-foreground">{event.category}</span>
+                    <span>{event.title}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setEventDialogOpen(false)}>
+                취소
+              </Button>
+              <Button onClick={saveEvents} disabled={isSavingEvents}>
+                {isSavingEvents ? '저장 중...' : '저장'}
+              </Button>
             </div>
-          )}
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setEventDialogOpen(false)}>
-              취소
-            </Button>
-            <Button onClick={saveEvents} disabled={isSavingEvents}>
-              {isSavingEvents ? '저장 중...' : '저장'}
-            </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
