@@ -35,6 +35,7 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    user: "0:0"
     command: npm run dev
     environment:
       - NODE_ENV=development
