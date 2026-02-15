@@ -1,12 +1,16 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Users, Image, Calendar, ScrollText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import type { UserItem, TimelineResponse, EventItem } from '@/types/api';
 
 export default function AdminDashboard() {
+  const [scanMessage, setScanMessage] = useState<string | null>(null);
+
   const { data: usersData } = useQuery<{ users: UserItem[] }>({
     queryKey: ['admin-users'],
     queryFn: async () => {
@@ -39,6 +43,24 @@ export default function AdminDashboard() {
   const totalMedia = timelineData?.years.reduce((sum, y) => sum + y.photoCount + y.videoCount, 0) || 0;
   const totalEvents = eventsData?.events.length || 0;
 
+  const scanMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/admin/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rootPath: '/data' }),
+      });
+      if (!res.ok) throw new Error('스캔 요청 실패');
+      return res.json();
+    },
+    onSuccess: () => {
+      setScanMessage('스캔이 시작되었습니다. 처리 상황은 워커 로그에서 확인할 수 있습니다.');
+    },
+    onError: () => {
+      setScanMessage('스캔 요청에 실패했습니다. 서버 로그를 확인해주세요.');
+    },
+  });
+
   const stats = [
     { label: '전체 사용자', value: totalUsers, icon: Users, color: 'text-blue-500' },
     { label: '승인 대기', value: pendingUsers, icon: Users, color: 'text-amber-500' },
@@ -52,6 +74,17 @@ export default function AdminDashboard() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <Button
+          onClick={() => scanMutation.mutate()}
+          disabled={scanMutation.isPending}
+        >
+          {scanMutation.isPending ? '스캔 요청 중...' : '로컬 데이터 스캔'}
+        </Button>
+        {scanMessage && (
+          <p className="text-sm text-muted-foreground">{scanMessage}</p>
+        )}
+      </div>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((stat, i) => {
           const Icon = stat.icon;
