@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole } from '@/lib/auth/session';
 import { createAuditLog } from '@/lib/audit';
 import { handleApiError, NotFoundError } from '@/lib/errors';
-import { resolveProcessedPath } from '@/lib/storage/paths';
+import { resolveOriginalPath, resolveProcessedPath } from '@/lib/storage/paths';
 import { z } from 'zod';
 import fs from 'fs/promises';
 
@@ -67,6 +67,7 @@ export async function GET(
         endDate: me.event.endDate?.toISOString() ?? null,
       })),
       createdAt: media.createdAt.toISOString(),
+      updatedAt: media.updatedAt.toISOString(),
     });
   } catch (error) {
     return handleApiError(error);
@@ -139,6 +140,15 @@ export async function DELETE(
     for (const filePath of [media.thumbnailPath, media.webPath, media.posterPath]) {
       if (filePath) {
         await fs.unlink(resolveProcessedPath(filePath)).catch(() => {});
+      }
+    }
+
+    // Delete original file if possible
+    if (media.originalPath) {
+      if (media.originalPath.startsWith('uploads/')) {
+        await fs.unlink(resolveProcessedPath(media.originalPath)).catch(() => {});
+      } else {
+        await fs.unlink(resolveOriginalPath(media.originalPath)).catch(() => {});
       }
     }
 

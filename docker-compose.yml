@@ -55,7 +55,7 @@ services:
       - .:/app
       - /app/node_modules
       - next_cache:/app/.next
-      - /data:/data:ro
+      - /data:/data
       - processed_media:/processed
     depends_on:
       postgres:

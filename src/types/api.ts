@@ -63,6 +63,7 @@ export interface MediaItem {
   storyAt: string | null;
   effectiveDate: string;
   processed: boolean;
+  updatedAt?: string;
 }
 
 export interface MediaDetail extends MediaItem {

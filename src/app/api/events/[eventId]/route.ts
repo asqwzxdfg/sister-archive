@@ -39,6 +39,7 @@ export async function GET(
                 height: true,
                 capturedAt: true,
                 storyAt: true,
+                updatedAt: true,
                 createdAt: true,
                 processed: true,
               },
@@ -71,6 +72,7 @@ export async function GET(
         storyAt: me.media.storyAt?.toISOString() ?? null,
         effectiveDate: (me.media.storyAt ?? me.media.capturedAt ?? me.media.createdAt).toISOString(),
         processed: me.media.processed,
+        updatedAt: me.media.updatedAt.toISOString(),
       })),
     });
   } catch (error) {

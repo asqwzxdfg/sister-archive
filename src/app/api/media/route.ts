@@ -113,6 +113,7 @@ export async function GET(request: Request) {
         capturedAt: true,
         storyAt: true,
         createdAt: true,
+        updatedAt: true,
         processed: true,
       },
     });
@@ -134,6 +135,7 @@ export async function GET(request: Request) {
       storyAt: item.storyAt?.toISOString() ?? null,
       effectiveDate: (item.storyAt ?? item.capturedAt ?? item.createdAt).toISOString(),
       processed: item.processed,
+      updatedAt: item.updatedAt.toISOString(),
     }));
 
     return Response.json({ items: mapped, nextCursor });

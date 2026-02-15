@@ -12,6 +12,7 @@ interface LightboxState {
   next: () => void;
   prev: () => void;
   goTo: (index: number) => void;
+  removeById: (id: string) => void;
 }
 
 export const useLightboxStore = create<LightboxState>((set, get) => ({
@@ -33,4 +34,14 @@ export const useLightboxStore = create<LightboxState>((set, get) => ({
     }
   },
   goTo: (index) => set({ currentIndex: index }),
+  removeById: (id) => {
+    const { items, currentIndex, isOpen } = get();
+    const nextItems = items.filter((item) => item.id !== id);
+    if (nextItems.length === 0) {
+      set({ items: nextItems, currentIndex: 0, isOpen: false });
+      return;
+    }
+    const nextIndex = Math.min(currentIndex, nextItems.length - 1);
+    set({ items: nextItems, currentIndex: nextIndex, isOpen });
+  },
 }));

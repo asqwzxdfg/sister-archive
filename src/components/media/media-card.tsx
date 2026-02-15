@@ -1,8 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Film, ImageOff } from 'lucide-react';
+import { Film, ImageOff, RefreshCw } from 'lucide-react';
 import type { MediaItem } from '@/types/api';
+import { useAuthStore } from '@/stores/auth-store';
+import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 
 interface MediaCardProps {
   item: MediaItem;
@@ -11,6 +14,39 @@ interface MediaCardProps {
 }
 
 export function MediaCard({ item, index, onClick }: MediaCardProps) {
+  const { user } = useAuthStore();
+  const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR';
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const thumbnailSrc = item.thumbnailUrl
+    ? `${item.thumbnailUrl}?v=${encodeURIComponent(item.updatedAt ?? item.effectiveDate)}`
+    : null;
+
+  const refreshThumbnail = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      const res = await fetch(`/api/media/${item.id}/regenerate`, { method: 'POST' });
+      if (!res.ok) throw new Error('Failed');
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return (
+            key === 'media' ||
+            key === 'timeline' ||
+            key === 'library-folder' ||
+            key === 'library-folders' ||
+            key === 'events'
+          );
+        },
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <motion.div
       layout
@@ -25,9 +61,9 @@ export function MediaCard({ item, index, onClick }: MediaCardProps) {
       onClick={onClick}
       className="group relative cursor-pointer overflow-hidden rounded-xl bg-muted aspect-square"
     >
-      {item.thumbnailUrl ? (
+      {thumbnailSrc ? (
         <img
-          src={item.thumbnailUrl}
+          src={thumbnailSrc}
           alt={item.filename}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
@@ -38,8 +74,20 @@ export function MediaCard({ item, index, onClick }: MediaCardProps) {
         </div>
       )}
 
+      {canEdit && (
+        <button
+          type="button"
+          onClick={refreshThumbnail}
+          className="absolute right-2 top-2 z-10 rounded-full bg-transparent p-1 text-white/80 opacity-0 transition-opacity hover:text-white group-hover:opacity-100"
+          aria-label="썸네일 재생성"
+          title="썸네일 재생성"
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+        </button>
+      )}
+
       {item.type === 'VIDEO' && (
-        <div className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
+        <div className="absolute top-2 left-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
           <Film className="h-3.5 w-3.5 text-white" />
         </div>
       )}
