@@ -46,7 +46,6 @@ export function Header() {
   const handleLogout = async () => {
     await fetch('/api/auth/login', { method: 'DELETE' }).catch(() => {});
     try {
-      localStorage.removeItem('remembered_email');
       localStorage.removeItem('remember_me');
     } catch {
       // ignore storage errors
