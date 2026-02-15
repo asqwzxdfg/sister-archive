@@ -40,42 +40,42 @@ export default function LibraryPage() {
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {folders.map((folder, index) => (
+      {folders.map((folder, index) => {
         const href = folder.path
           ? `/library/${folder.path.split('/').map(encodeURIComponent).join('/')}`
           : '/library';
 
         return (
-        <motion.div
-          key={folder.path || 'root'}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.03 }}
-        >
-          <Link href={href}>
-            <Card className="group overflow-hidden">
-              <CardContent className="flex items-center gap-4 p-4">
-                {folder.coverThumbnail ? (
-                  <img
-                    src={folder.coverThumbnail}
-                    alt={folder.name}
-                    className="h-16 w-16 rounded-lg object-cover"
-                  />
-                ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
-                    <Folder className="h-6 w-6 text-muted-foreground" />
+          <motion.div
+            key={folder.path || 'root'}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.03 }}
+          >
+            <Link href={href}>
+              <Card className="group overflow-hidden">
+                <CardContent className="flex items-center gap-4 p-4">
+                  {folder.coverThumbnail ? (
+                    <img
+                      src={folder.coverThumbnail}
+                      alt={folder.name}
+                      className="h-16 w-16 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
+                      <Folder className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{folder.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      사진 {folder.photoCount}장 · 영상 {folder.videoCount}개
+                    </p>
                   </div>
-                )}
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{folder.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    사진 {folder.photoCount}장 · 영상 {folder.videoCount}개
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        </motion.div>
+                </CardContent>
+              </Card>
+            </Link>
+          </motion.div>
         );
       })}
     </div>
