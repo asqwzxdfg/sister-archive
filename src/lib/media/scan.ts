@@ -61,6 +61,7 @@ export async function scanAndRegisterLocalMedia(
   const ignore = new Set(
     (options.ignoreDirs || []).map((dir) => path.resolve(dir)),
   );
+  ignore.add(path.resolve(rootPath, 'lost+found'));
 
   const result: ScanResult = {
     totalFiles: 0,

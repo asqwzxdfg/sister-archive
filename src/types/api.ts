@@ -108,3 +108,16 @@ export interface AuditLogItem {
   metadata: Record<string, unknown> | null;
   createdAt: string;
 }
+
+export interface LibraryFolder {
+  path: string;
+  name: string;
+  photoCount: number;
+  videoCount: number;
+  totalCount: number;
+  coverThumbnail: string | null;
+}
+
+export interface LibraryResponse {
+  folders: LibraryFolder[];
+}

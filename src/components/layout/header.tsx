@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { cn } from '@/lib/utils';
-import { Camera, Calendar, Upload, Settings, LogOut, Menu, X, User } from 'lucide-react';
+import { Camera, Calendar, Upload, Settings, LogOut, Menu, X, User, Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const navItems = [
   { href: '/years', label: '타임라인', icon: Camera },
   { href: '/events', label: '이벤트', icon: Calendar },
+  { href: '/library', label: '라이브러리', icon: Folder },
 ];
 
 const editorItems = [

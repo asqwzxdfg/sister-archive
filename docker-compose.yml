@@ -55,6 +55,7 @@ services:
       - .:/app
       - /app/node_modules
       - next_cache:/app/.next
+      - /data:/data:ro
       - ${SOURCE_PHOTO_PATH:-./data/photo}:/data/photo:ro
       - ${SOURCE_VIDEO_PATH:-./data/video}:/data/video:ro
       - processed_media:/data/processed
@@ -69,12 +70,14 @@ services:
       context: .
       dockerfile: Dockerfile.worker
     restart: unless-stopped
+    user: "0:0"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DB_USER:-yuna}:${DB_PASSWORD}@postgres:5432/yuna
       - REDIS_URL=redis://redis:6379
       - PROCESSED_MEDIA_PATH=/data/processed
     volumes:
+      - /data:/data:ro
       - ${SOURCE_PHOTO_PATH:-./data/photo}:/data/photo:ro
       - ${SOURCE_VIDEO_PATH:-./data/video}:/data/video:ro
       - processed_media:/data/processed

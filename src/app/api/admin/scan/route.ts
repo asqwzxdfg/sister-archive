@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const job = await enqueueMediaScan({
       rootPath,
       userId: session.sub,
-      ignoreDirs: [PROCESSED_DIR],
+      ignoreDirs: [PROCESSED_DIR, '/data/lost+found'],
     });
 
     return Response.json({ status: 'queued', jobId: job.id }, { status: 202 });
