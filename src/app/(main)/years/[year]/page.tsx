@@ -33,6 +33,8 @@ export default function YearDetailPage() {
       photoCount: monthData?.photoCount || 0,
       videoCount: monthData?.videoCount || 0,
       coverThumbnail: monthData?.coverThumbnail || null,
+      coverMediaId: monthData?.coverMediaId || null,
+      coverUpdatedAt: monthData?.coverUpdatedAt || null,
     };
   });
 
@@ -69,6 +71,8 @@ export default function YearDetailPage() {
                 photoCount={month.photoCount}
                 videoCount={month.videoCount}
                 coverThumbnail={month.coverThumbnail}
+                coverMediaId={month.coverMediaId}
+                coverUpdatedAt={month.coverUpdatedAt}
                 index={index}
               />
             ))}

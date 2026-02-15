@@ -2,8 +2,12 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Camera, Film } from 'lucide-react';
+import { Camera, Film, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuthStore } from '@/stores/auth-store';
+import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import type React from 'react';
 
 interface MonthCardProps {
   year: number;
@@ -11,6 +15,8 @@ interface MonthCardProps {
   photoCount: number;
   videoCount: number;
   coverThumbnail: string | null;
+  coverMediaId?: string | null;
+  coverUpdatedAt?: string | null;
   index: number;
 }
 
@@ -19,9 +25,40 @@ const MONTH_NAMES = [
   '7월', '8월', '9월', '10월', '11월', '12월',
 ];
 
-export function MonthCard({ year, month, photoCount, videoCount, coverThumbnail, index }: MonthCardProps) {
+export function MonthCard({
+  year,
+  month,
+  photoCount,
+  videoCount,
+  coverThumbnail,
+  coverMediaId,
+  coverUpdatedAt,
+  index,
+}: MonthCardProps) {
   const total = photoCount + videoCount;
   const isEmpty = total === 0;
+  const { user } = useAuthStore();
+  const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR';
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const queryClient = useQueryClient();
+
+  const coverSrc = coverThumbnail
+    ? `${coverThumbnail}?v=${encodeURIComponent(coverUpdatedAt ?? '')}`
+    : null;
+
+  const refreshThumbnail = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!coverMediaId || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      const res = await fetch(`/api/media/${coverMediaId}/regenerate`, { method: 'POST' });
+      if (!res.ok) throw new Error('Failed');
+      queryClient.invalidateQueries({ queryKey: ['timeline'] });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   return (
     <Link href={isEmpty ? '#' : `/years/${year}/${month}`}>
@@ -39,9 +76,9 @@ export function MonthCard({ year, month, photoCount, videoCount, coverThumbnail,
         }`}
       >
         <div className="aspect-square relative bg-muted">
-          {coverThumbnail ? (
+          {coverSrc ? (
             <img
-              src={coverThumbnail}
+              src={coverSrc}
               alt={`${year}년 ${month}월`}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
@@ -54,6 +91,17 @@ export function MonthCard({ year, month, photoCount, videoCount, coverThumbnail,
           )}
           {!isEmpty && (
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          )}
+          {canEdit && coverMediaId && !isEmpty && (
+            <button
+              type="button"
+              onClick={refreshThumbnail}
+              className="absolute right-2 top-2 z-10 rounded-full bg-transparent p-1 text-white/80 opacity-0 transition-opacity hover:text-white group-hover:opacity-100"
+              aria-label="썸네일 재생성"
+              title="썸네일 재생성"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
           )}
         </div>
 

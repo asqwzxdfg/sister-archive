@@ -1,11 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Film, ImageOff, RefreshCw } from 'lucide-react';
+import { Film, ImageOff } from 'lucide-react';
 import type { MediaItem } from '@/types/api';
-import { useAuthStore } from '@/stores/auth-store';
-import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
 
 interface MediaCardProps {
   item: MediaItem;
@@ -14,38 +11,7 @@ interface MediaCardProps {
 }
 
 export function MediaCard({ item, index, onClick }: MediaCardProps) {
-  const { user } = useAuthStore();
-  const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR';
-  const queryClient = useQueryClient();
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const thumbnailSrc = item.thumbnailUrl
-    ? `${item.thumbnailUrl}?v=${encodeURIComponent(item.updatedAt ?? item.effectiveDate)}`
-    : null;
-
-  const refreshThumbnail = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    try {
-      const res = await fetch(`/api/media/${item.id}/regenerate`, { method: 'POST' });
-      if (!res.ok) throw new Error('Failed');
-      queryClient.invalidateQueries({
-        predicate: (query) => {
-          const key = query.queryKey[0];
-          return (
-            key === 'media' ||
-            key === 'timeline' ||
-            key === 'library-folder' ||
-            key === 'library-folders' ||
-            key === 'events'
-          );
-        },
-      });
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+  const thumbnailSrc = item.thumbnailUrl;
 
   return (
     <motion.div
@@ -72,18 +38,6 @@ export function MediaCard({ item, index, onClick }: MediaCardProps) {
         <div className="flex h-full items-center justify-center">
           <ImageOff className="h-8 w-8 text-muted-foreground/30" />
         </div>
-      )}
-
-      {canEdit && (
-        <button
-          type="button"
-          onClick={refreshThumbnail}
-          className="absolute right-2 top-2 z-10 rounded-full bg-transparent p-1 text-white/80 opacity-0 transition-opacity hover:text-white group-hover:opacity-100"
-          aria-label="썸네일 재생성"
-          title="썸네일 재생성"
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        </button>
       )}
 
       {item.type === 'VIDEO' && (

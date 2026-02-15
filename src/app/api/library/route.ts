@@ -10,6 +10,8 @@ type FolderSummary = {
   videoCount: number;
   totalCount: number;
   coverThumbnail: string | null;
+  coverMediaId: string | null;
+  coverUpdatedAt: string | null;
 };
 
 export async function GET() {
@@ -30,6 +32,7 @@ export async function GET() {
         type: true,
         originalPath: true,
         thumbnailPath: true,
+        updatedAt: true,
         storyAt: true,
         capturedAt: true,
         createdAt: true,
@@ -52,6 +55,8 @@ export async function GET() {
           videoCount: 0,
           totalCount: 0,
           coverThumbnail: null,
+          coverMediaId: null,
+          coverUpdatedAt: null,
         });
       }
 
@@ -62,6 +67,8 @@ export async function GET() {
 
       if (!summary.coverThumbnail && item.thumbnailPath) {
         summary.coverThumbnail = `/api/media/file/${item.thumbnailPath}`;
+        summary.coverMediaId = item.id;
+        summary.coverUpdatedAt = item.updatedAt.toISOString();
       }
     }
 

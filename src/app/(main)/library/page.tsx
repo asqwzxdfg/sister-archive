@@ -1,13 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Folder } from 'lucide-react';
+import { Folder, RefreshCw } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { LibraryResponse } from '@/types/api';
+import { useAuthStore } from '@/stores/auth-store';
+import type React from 'react';
 
 export default function LibraryPage() {
+  const { user } = useAuthStore();
+  const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR';
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery<LibraryResponse>({
     queryKey: ['library-folders'],
     queryFn: async () => {
@@ -44,6 +49,9 @@ export default function LibraryPage() {
         const href = folder.path
           ? `/library/${folder.path.split('/').map(encodeURIComponent).join('/')}`
           : '/library';
+        const coverSrc = folder.coverThumbnail
+          ? `${folder.coverThumbnail}?v=${encodeURIComponent(folder.coverUpdatedAt ?? '')}`
+          : null;
 
         return (
           <motion.div
@@ -54,10 +62,10 @@ export default function LibraryPage() {
           >
             <Link href={href}>
               <Card className="group overflow-hidden">
-                <CardContent className="flex items-center gap-4 p-4">
-                  {folder.coverThumbnail ? (
+                <CardContent className="relative flex items-center gap-4 p-4">
+                  {coverSrc ? (
                     <img
-                      src={folder.coverThumbnail}
+                      src={coverSrc}
                       alt={folder.name}
                       className="h-16 w-16 rounded-lg object-cover"
                     />
@@ -72,6 +80,27 @@ export default function LibraryPage() {
                       사진 {folder.photoCount}장 · 영상 {folder.videoCount}개
                     </p>
                   </div>
+                  {canEdit && folder.coverMediaId && (
+                    <button
+                      type="button"
+                      onClick={async (e: React.MouseEvent) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const res = await fetch(`/api/media/${folder.coverMediaId}/regenerate`, {
+                          method: 'POST',
+                        });
+                        if (res.ok) {
+                          queryClient.invalidateQueries({ queryKey: ['library-folders'] });
+                          queryClient.invalidateQueries({ queryKey: ['timeline'] });
+                        }
+                      }}
+                      className="absolute right-2 top-2 rounded-full bg-transparent p-1 text-muted-foreground/70 opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                      aria-label="썸네일 재생성"
+                      title="썸네일 재생성"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </button>
+                  )}
                 </CardContent>
               </Card>
             </Link>

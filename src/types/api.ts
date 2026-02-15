@@ -15,6 +15,8 @@ export interface TimelineYear {
   photoCount: number;
   videoCount: number;
   coverThumbnail: string | null;
+  coverMediaId?: string | null;
+  coverUpdatedAt?: string | null;
   months: TimelineMonth[];
 }
 
@@ -23,6 +25,8 @@ export interface TimelineMonth {
   photoCount: number;
   videoCount: number;
   coverThumbnail: string | null;
+  coverMediaId?: string | null;
+  coverUpdatedAt?: string | null;
 }
 
 export interface TimelineResponse {
@@ -117,6 +121,8 @@ export interface LibraryFolder {
   videoCount: number;
   totalCount: number;
   coverThumbnail: string | null;
+  coverMediaId?: string | null;
+  coverUpdatedAt?: string | null;
 }
 
 export interface LibraryResponse {

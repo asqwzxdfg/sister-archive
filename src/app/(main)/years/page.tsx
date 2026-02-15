@@ -38,6 +38,8 @@ export default function YearsPage() {
                   photoCount={year.photoCount}
                   videoCount={year.videoCount}
                   coverThumbnail={year.coverThumbnail}
+                  coverMediaId={year.coverMediaId ?? null}
+                  coverUpdatedAt={year.coverUpdatedAt ?? null}
                   index={index}
                 />
               ))}

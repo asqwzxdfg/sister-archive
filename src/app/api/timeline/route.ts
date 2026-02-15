@@ -15,6 +15,7 @@ export async function GET() {
         storyAt: true,
         capturedAt: true,
         createdAt: true,
+        updatedAt: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -23,10 +24,14 @@ export async function GET() {
       photoCount: number;
       videoCount: number;
       coverThumbnail: string | null;
+      coverMediaId: string | null;
+      coverUpdatedAt: string | null;
       months: Map<number, {
         photoCount: number;
         videoCount: number;
         coverThumbnail: string | null;
+        coverMediaId: string | null;
+        coverUpdatedAt: string | null;
       }>;
     }>();
 
@@ -43,6 +48,8 @@ export async function GET() {
           photoCount: 0,
           videoCount: 0,
           coverThumbnail: null,
+          coverMediaId: null,
+          coverUpdatedAt: null,
           months: new Map(),
         });
       }
@@ -53,6 +60,8 @@ export async function GET() {
 
       if (!yearData.coverThumbnail && item.thumbnailPath) {
         yearData.coverThumbnail = `/api/media/file/${item.thumbnailPath}`;
+        yearData.coverMediaId = item.id;
+        yearData.coverUpdatedAt = item.updatedAt.toISOString();
       }
 
       if (!yearData.months.has(month)) {
@@ -60,6 +69,8 @@ export async function GET() {
           photoCount: 0,
           videoCount: 0,
           coverThumbnail: null,
+          coverMediaId: null,
+          coverUpdatedAt: null,
         });
       }
 
@@ -69,6 +80,8 @@ export async function GET() {
 
       if (!monthData.coverThumbnail && item.thumbnailPath) {
         monthData.coverThumbnail = `/api/media/file/${item.thumbnailPath}`;
+        monthData.coverMediaId = item.id;
+        monthData.coverUpdatedAt = item.updatedAt.toISOString();
       }
     }
 
@@ -78,12 +91,16 @@ export async function GET() {
         photoCount: data.photoCount,
         videoCount: data.videoCount,
         coverThumbnail: data.coverThumbnail,
+        coverMediaId: data.coverMediaId,
+        coverUpdatedAt: data.coverUpdatedAt,
         months: Array.from(data.months.entries())
           .map(([month, mData]) => ({
             month,
             photoCount: mData.photoCount,
             videoCount: mData.videoCount,
             coverThumbnail: mData.coverThumbnail,
+            coverMediaId: mData.coverMediaId,
+            coverUpdatedAt: mData.coverUpdatedAt,
           }))
           .sort((a, b) => a.month - b.month),
       }))
