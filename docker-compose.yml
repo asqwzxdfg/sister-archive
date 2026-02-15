@@ -47,7 +47,7 @@ services:
       - OWNER_EMAIL=${OWNER_EMAIL:-admin@yuna.family}
       - OWNER_PASSWORD=${OWNER_PASSWORD:-changeme123}
       - OWNER_NAME=${OWNER_NAME:-Owner}
-      - PROCESSED_MEDIA_PATH=/data/processed
+      - PROCESSED_MEDIA_PATH=/processed
       - NEXT_TELEMETRY_DISABLED=1
     ports:
       - "3000:3000"
@@ -56,9 +56,7 @@ services:
       - /app/node_modules
       - next_cache:/app/.next
       - /data:/data:ro
-      - ${SOURCE_PHOTO_PATH:-./data/photo}:/data/photo:ro
-      - ${SOURCE_VIDEO_PATH:-./data/video}:/data/video:ro
-      - processed_media:/data/processed
+      - processed_media:/processed
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,12 +73,10 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DB_USER:-yuna}:${DB_PASSWORD}@postgres:5432/yuna
       - REDIS_URL=redis://redis:6379
-      - PROCESSED_MEDIA_PATH=/data/processed
+      - PROCESSED_MEDIA_PATH=/processed
     volumes:
       - /data:/data:ro
-      - ${SOURCE_PHOTO_PATH:-./data/photo}:/data/photo:ro
-      - ${SOURCE_VIDEO_PATH:-./data/video}:/data/video:ro
-      - processed_media:/data/processed
+      - processed_media:/processed
     depends_on:
       postgres:
         condition: service_healthy

@@ -24,8 +24,8 @@ RUN addgroup --system --gid 1001 worker && \
     adduser --system --uid 1001 worker
 
 # Create data directories
-RUN mkdir -p /data/photo /data/video /data/processed /data/processed/thumbnails /data/processed/web /data/processed/posters /data/processed/uploads /data/processed/temp && \
-    chown -R worker:worker /data
+RUN mkdir -p /processed/thumbnails /processed/web /processed/posters /processed/uploads /processed/temp && \
+    chown -R worker:worker /processed
 
 USER worker
 

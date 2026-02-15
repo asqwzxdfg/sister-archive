@@ -37,8 +37,8 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 
 # Create data directories
-RUN mkdir -p /data/photo /data/video /data/processed && \
-    chown -R nextjs:nodejs /data
+RUN mkdir -p /processed && \
+    chown -R nextjs:nodejs /processed
 
 USER nextjs
 
