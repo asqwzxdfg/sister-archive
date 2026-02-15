@@ -35,8 +35,9 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    command: npm run dev
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - DATABASE_URL=postgresql://${DB_USER:-yuna}:${DB_PASSWORD}@postgres:5432/yuna
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
@@ -50,6 +51,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
+      - .:/app
+      - /app/node_modules
+      - next_cache:/app/.next
       - ${SOURCE_PHOTO_PATH:-./data/photo}:/data/photo:ro
       - ${SOURCE_VIDEO_PATH:-./data/video}:/data/video:ro
       - processed_media:/data/processed
@@ -99,3 +103,4 @@ volumes:
   pgdata:
   redisdata:
   processed_media:
+  next_cache:
