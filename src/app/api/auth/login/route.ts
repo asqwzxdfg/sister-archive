@@ -65,10 +65,16 @@ export async function POST(request: Request) {
     });
 
     const headers = new Headers(response.headers);
-    headers.append(
-      'Set-Cookie',
-      `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${15 * 60}`,
-    );
+    const accessCookie = [
+      `access_token=${accessToken}`,
+      'HttpOnly',
+      'Path=/',
+      'SameSite=Lax',
+    ];
+    if (rememberMe) {
+      accessCookie.push(`Max-Age=${15 * 60}`);
+    }
+    headers.append('Set-Cookie', accessCookie.join('; '));
     const refreshCookie = [
       `refresh_token=${refreshToken}`,
       'HttpOnly',
