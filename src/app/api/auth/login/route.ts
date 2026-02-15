@@ -15,7 +15,18 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { email, password } = loginSchema.parse(body);
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        approved: true,
+        passwordHash: true,
+        avatarPath: true,
+      },
+    });
     if (!user) {
       throw new AppError('이메일 또는 비밀번호가 올바르지 않습니다', 401);
     }
@@ -47,6 +58,7 @@ export async function POST(request: Request) {
         name: user.name,
         role: user.role,
         approved: user.approved,
+        avatarUrl: user.avatarPath ? '/api/auth/avatar' : null,
       },
     });
 

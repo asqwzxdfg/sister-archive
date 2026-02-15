@@ -9,6 +9,7 @@ interface User {
   role: 'OWNER' | 'EDITOR' | 'VIEWER';
   approved: boolean;
   createdAt?: string;
+  avatarUrl?: string | null;
 }
 
 interface AuthState {

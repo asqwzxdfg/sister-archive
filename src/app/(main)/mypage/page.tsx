@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +13,6 @@ import { formatDate } from '@/lib/utils';
 
 type FormState = {
   name: string;
-  email: string;
   currentPassword: string;
   newPassword: string;
   confirmNewPassword: string;
@@ -23,22 +22,23 @@ export default function MyPage() {
   const { user, isLoading, setUser } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [avatarError, setAvatarError] = useState('');
   const [form, setForm] = useState<FormState>({
     name: '',
-    email: '',
     currentPassword: '',
     newPassword: '',
     confirmNewPassword: '',
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
       setForm((prev) => ({
         ...prev,
         name: user.name ?? '',
-        email: user.email ?? '',
       }));
     }
   }, [user]);
@@ -55,6 +55,46 @@ export default function MyPage() {
     }
   }, [user]);
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setAvatarError('');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setAvatarError('이미지 파일(jpg/png/webp)만 업로드할 수 있습니다');
+      return;
+    }
+
+    setIsAvatarUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/auth/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAvatarError(data.error || '아바타 업로드에 실패했습니다');
+        return;
+      }
+
+      const cacheBuster = `?t=${Date.now()}`;
+      setUser({
+        ...user,
+        avatarUrl: data.avatarUrl ? `${data.avatarUrl}${cacheBuster}` : null,
+      });
+    } catch {
+      setAvatarError('서버에 연결할 수 없습니다');
+    } finally {
+      setIsAvatarUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -69,7 +109,6 @@ export default function MyPage() {
 
     const payload: Record<string, string> = {};
     if (form.name && form.name !== user.name) payload.name = form.name;
-    if (form.email && form.email !== user.email) payload.email = form.email;
     if (form.newPassword) {
       payload.currentPassword = form.currentPassword;
       payload.newPassword = form.newPassword;
@@ -159,7 +198,51 @@ export default function MyPage() {
           <CardDescription>현재 계정 정보입니다</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 overflow-hidden rounded-full bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground">
+                {user.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.avatarUrl}
+                    alt="프로필 이미지"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  user.name?.slice(0, 1)
+                )}
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">프로필 이미지</p>
+                <p className="text-xs text-muted-foreground">
+                  256x256 권장, jpg/png/webp
+                </p>
+              </div>
+            </div>
+            <div className="sm:ml-auto">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isAvatarUploading}
+              >
+                {isAvatarUploading ? '업로드 중...' : '아바타 변경'}
+              </Button>
+            </div>
+          </div>
+          {avatarError && (
+            <p className="mt-2 text-sm text-destructive">{avatarError}</p>
+          )}
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">이름</p>
               <p className="text-sm font-medium">{user.name}</p>
@@ -214,25 +297,14 @@ export default function MyPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">이름</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">이메일</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">이름</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">

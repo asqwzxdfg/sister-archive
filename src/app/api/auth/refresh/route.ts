@@ -13,7 +13,17 @@ export async function POST(request: Request) {
       throw new UnauthorizedError('유효하지 않은 토큰입니다');
     }
 
-    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        approved: true,
+        avatarPath: true,
+      },
+    });
     if (!user) throw new UnauthorizedError('사용자를 찾을 수 없습니다');
 
     const tokenPayload = {
@@ -33,6 +43,7 @@ export async function POST(request: Request) {
         name: user.name,
         role: user.role,
         approved: user.approved,
+        avatarUrl: user.avatarPath ? '/api/auth/avatar' : null,
       },
     });
 

@@ -25,6 +25,7 @@ model User {
   name         String
   role         Role     @default(VIEWER)
   approved     Boolean  @default(false)
+  avatarPath   String?  @map("avatar_path")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
