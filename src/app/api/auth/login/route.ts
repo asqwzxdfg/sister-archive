@@ -8,12 +8,13 @@ import { z } from 'zod';
 const loginSchema = z.object({
   email: z.string().email('올바른 이메일을 입력해주세요'),
   password: z.string().min(1, '비밀번호를 입력해주세요'),
+  rememberMe: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password } = loginSchema.parse(body);
+    const { email, password, rememberMe } = loginSchema.parse(body);
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
       email: user.email,
       role: user.role,
       approved: user.approved,
+      remember: Boolean(rememberMe),
     };
 
     const accessToken = signAccessToken(tokenPayload);
@@ -67,10 +69,16 @@ export async function POST(request: Request) {
       'Set-Cookie',
       `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${15 * 60}`,
     );
-    headers.append(
-      'Set-Cookie',
-      `refresh_token=${refreshToken}; HttpOnly; Path=/api/auth/refresh; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`,
-    );
+    const refreshCookie = [
+      `refresh_token=${refreshToken}`,
+      'HttpOnly',
+      'Path=/api/auth/refresh',
+      'SameSite=Lax',
+    ];
+    if (rememberMe) {
+      refreshCookie.push(`Max-Age=${9999 * 24 * 60 * 60}`);
+    }
+    headers.append('Set-Cookie', refreshCookie.join('; '));
 
     return new Response(response.body, {
       status: 200,

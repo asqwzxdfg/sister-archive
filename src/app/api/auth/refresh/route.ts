@@ -12,6 +12,7 @@ export async function POST(request: Request) {
     if (!payload || payload.type !== 'refresh') {
       throw new UnauthorizedError('유효하지 않은 토큰입니다');
     }
+    const remember = Boolean(payload.remember);
 
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
       email: user.email,
       role: user.role,
       approved: user.approved,
+      remember,
     };
 
     const accessToken = signAccessToken(tokenPayload);
@@ -52,10 +54,16 @@ export async function POST(request: Request) {
       'Set-Cookie',
       `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${15 * 60}`,
     );
-    headers.append(
-      'Set-Cookie',
-      `refresh_token=${refreshToken}; HttpOnly; Path=/api/auth/refresh; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`,
-    );
+    const refreshCookie = [
+      `refresh_token=${refreshToken}`,
+      'HttpOnly',
+      'Path=/api/auth/refresh',
+      'SameSite=Lax',
+    ];
+    if (remember) {
+      refreshCookie.push(`Max-Age=${9999 * 24 * 60 * 60}`);
+    }
+    headers.append('Set-Cookie', refreshCookie.join('; '));
 
     return new Response(response.body, { status: 200, headers });
   } catch (error) {

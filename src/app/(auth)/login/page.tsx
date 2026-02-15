@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -17,6 +17,49 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberEmail, setRememberEmail] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem('remembered_email');
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberEmail(true);
+      }
+      const savedRememberMe = localStorage.getItem('remember_me');
+      if (savedRememberMe === 'true') {
+        setRememberMe(true);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const tryAutoLogin = async () => {
+      try {
+        const res = await fetch('/api/auth/refresh', { method: 'POST' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        setUser(data.user);
+        if (!data.user.approved) {
+          router.push('/pending');
+        } else {
+          router.push('/years');
+        }
+      } catch {
+        // ignore auto-login errors
+      }
+    };
+
+    tryAutoLogin();
+    return () => {
+      cancelled = true;
+    };
+  }, [router, setUser]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +70,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
       });
 
       const data = await res.json();
@@ -38,6 +81,16 @@ export default function LoginPage() {
       }
 
       setUser(data.user);
+      try {
+        if (rememberEmail) {
+          localStorage.setItem('remembered_email', email);
+        } else {
+          localStorage.removeItem('remembered_email');
+        }
+        localStorage.setItem('remember_me', rememberMe ? 'true' : 'false');
+      } catch {
+        // ignore storage errors
+      }
 
       if (!data.user.approved) {
         router.push('/pending');
@@ -90,6 +143,26 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-input"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                자동 로그인
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-input"
+                  checked={rememberEmail}
+                  onChange={(e) => setRememberEmail(e.target.checked)}
+                />
+                아이디 기억
+              </label>
             </div>
 
             {error && (

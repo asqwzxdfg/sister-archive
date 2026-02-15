@@ -10,6 +10,7 @@ export interface JwtPayload {
   email: string;
   role: Role;
   approved: boolean;
+  remember?: boolean;
   type: 'access' | 'refresh';
 }
 
@@ -19,9 +20,11 @@ export function signAccessToken(payload: Omit<JwtPayload, 'type'>): string {
   });
 }
 
+const LONG_REFRESH_EXPIRY_SECONDS = 9999 * 24 * 60 * 60;
+
 export function signRefreshToken(payload: Omit<JwtPayload, 'type'>): string {
   return jwt.sign({ ...payload, type: 'refresh' }, JWT_SECRET, {
-    expiresIn: REFRESH_EXPIRY,
+    expiresIn: payload.remember ? LONG_REFRESH_EXPIRY_SECONDS : REFRESH_EXPIRY,
   });
 }
 
