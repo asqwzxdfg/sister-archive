@@ -10,7 +10,12 @@ const querySchema = z.object({
   type: z.enum(['PHOTO', 'VIDEO']).optional(),
   eventId: z.string().optional(),
   cursor: z.string().optional(),
-  limit: z.coerce.number().min(1).max(100).default(40),
+  // Clamp to avoid hard failures when clients send oversized limits.
+  limit: z.coerce
+    .number()
+    .min(1)
+    .default(40)
+    .transform((value) => Math.min(value, 100)),
   sort: z.enum(['newest', 'oldest']).default('newest'),
 });
 

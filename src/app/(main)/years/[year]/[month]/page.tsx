@@ -25,7 +25,7 @@ export default function MonthDetailPage() {
       const searchParams = new URLSearchParams({
         year: String(year),
         month: String(month),
-        limit: '200',
+        limit: '100',
       });
       if (filter !== 'all') {
         searchParams.set('type', filter);
