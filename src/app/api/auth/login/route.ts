@@ -94,3 +94,10 @@ export async function POST(request: Request) {
     return handleApiError(error);
   }
 }
+
+export async function DELETE() {
+  const headers = new Headers();
+  headers.append('Set-Cookie', 'access_token=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0');
+  headers.append('Set-Cookie', 'refresh_token=; HttpOnly; Path=/api/auth/refresh; SameSite=Lax; Max-Age=0');
+  return new Response(null, { status: 204, headers });
+}

@@ -30,7 +30,7 @@ const adminItems = [
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isEditor = user?.role === 'OWNER' || user?.role === 'EDITOR';
@@ -45,8 +45,13 @@ export function Header() {
 
   const handleLogout = async () => {
     await fetch('/api/auth/login', { method: 'DELETE' }).catch(() => {});
-    document.cookie = 'access_token=; Path=/; Max-Age=0';
-    document.cookie = 'refresh_token=; Path=/api/auth/refresh; Max-Age=0';
+    try {
+      localStorage.removeItem('remembered_email');
+      localStorage.removeItem('remember_me');
+    } catch {
+      // ignore storage errors
+    }
+    logout();
     router.push('/login');
   };
 
