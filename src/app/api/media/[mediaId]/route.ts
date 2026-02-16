@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole } from '@/lib/auth/session';
 import { createAuditLog } from '@/lib/audit';
-import { handleApiError, NotFoundError } from '@/lib/errors';
+import { handleApiError, NotFoundError, AppError } from '@/lib/errors';
 import { resolveOriginalPath, resolveProcessedPath } from '@/lib/storage/paths';
+import { registerDeletedMediaTombstone } from '@/lib/media/deleted-tombstone';
 import { z } from 'zod';
 import fs from 'fs/promises';
 
@@ -136,21 +137,31 @@ export async function DELETE(
     const media = await prisma.media.findUnique({ where: { id: mediaId } });
     if (!media) throw new NotFoundError('미디어를 찾을 수 없습니다');
 
-    // Delete processed files
+    // Delete processed files (best effort)
     for (const filePath of [media.thumbnailPath, media.webPath, media.posterPath]) {
       if (filePath) {
         await fs.unlink(resolveProcessedPath(filePath)).catch(() => {});
       }
     }
 
-    // Delete original file if possible
-    if (media.originalPath) {
-      if (media.originalPath.startsWith('uploads/')) {
-        await fs.unlink(resolveProcessedPath(media.originalPath)).catch(() => {});
-      } else {
-        await fs.unlink(resolveOriginalPath(media.originalPath)).catch(() => {});
+    // Original file must be removed so it cannot be re-discovered by scans.
+    const originalFilePath = media.originalPath.startsWith('uploads/')
+      ? resolveProcessedPath(media.originalPath)
+      : resolveOriginalPath(media.originalPath);
+
+    try {
+      await fs.unlink(originalFilePath);
+    } catch (error) {
+      const err = error as NodeJS.ErrnoException;
+      if (err.code !== 'ENOENT') {
+        throw new AppError('원본 파일 삭제에 실패했습니다. 권한/경로를 확인해주세요.', 500);
       }
     }
+
+    await registerDeletedMediaTombstone({
+      originalPath: originalFilePath,
+      hash: media.hash,
+    });
 
     await prisma.media.delete({ where: { id: mediaId } });
 

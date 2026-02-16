@@ -28,6 +28,19 @@ export async function POST(
       throw new AppError('원본 파일을 찾을 수 없습니다', 404);
     }
 
+    // Remove previous derivatives first so refresh always starts clean.
+    for (const processedPath of [media.thumbnailPath, media.webPath, media.posterPath]) {
+      if (!processedPath) continue;
+      try {
+        await fs.promises.unlink(resolveProcessedPath(processedPath));
+      } catch (error) {
+        const err = error as NodeJS.ErrnoException;
+        if (err.code !== 'ENOENT') {
+          throw new AppError('기존 썸네일/파생 파일 삭제에 실패했습니다.', 500);
+        }
+      }
+    }
+
     await prisma.media.update({
       where: { id: mediaId },
       data: {

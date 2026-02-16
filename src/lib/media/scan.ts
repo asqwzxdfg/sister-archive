@@ -3,6 +3,7 @@ import path from 'path';
 import type { PrismaClient } from '@prisma/client';
 import { enqueueMediaProcessing } from '@/lib/queue/media-queue';
 import { computeFileHash } from '@/lib/media/hash';
+import { loadDeletedMediaTombstone } from '@/lib/media/deleted-tombstone';
 import { PROCESSED_DIR } from '@/lib/constants';
 
 type ScanCacheEntry = {
@@ -19,6 +20,7 @@ type ScanResult = {
   skippedUnchanged: number;
   skippedUnsupported: number;
   skippedDuplicate: number;
+  skippedDeleted: number;
   errors: number;
 };
 
@@ -70,10 +72,12 @@ export async function scanAndRegisterLocalMedia(
     skippedUnchanged: 0,
     skippedUnsupported: 0,
     skippedDuplicate: 0,
+    skippedDeleted: 0,
     errors: 0,
   };
 
   const cache = await loadCache();
+  const deleted = await loadDeletedMediaTombstone();
 
   const existing = await prisma.media.findMany({
     select: {
@@ -131,6 +135,11 @@ export async function scanAndRegisterLocalMedia(
         continue;
       }
 
+      if (deleted.paths.has(resolvedPath)) {
+        result.skippedDeleted += 1;
+        continue;
+      }
+
       let stat;
       try {
         stat = await fs.stat(resolvedPath);
@@ -156,6 +165,12 @@ export async function scanAndRegisterLocalMedia(
         hash = await computeFileHash(resolvedPath);
       } catch {
         result.errors += 1;
+        continue;
+      }
+
+      if (deleted.hashes.has(hash)) {
+        cache[resolvedPath] = { size: stat.size, mtimeMs: stat.mtimeMs };
+        result.skippedDeleted += 1;
         continue;
       }
 
