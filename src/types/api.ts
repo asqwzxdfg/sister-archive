@@ -31,6 +31,7 @@ export interface TimelineMonth {
 
 export interface TimelineResponse {
   years: TimelineYear[];
+  undatedCount?: number;
 }
 
 export interface LoginRequest {

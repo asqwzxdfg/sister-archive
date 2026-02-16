@@ -34,9 +34,14 @@ export async function GET() {
         coverUpdatedAt: string | null;
       }>;
     }>();
+    let undatedCount = 0;
 
     for (const item of media) {
-      const effectiveDate = item.storyAt ?? item.capturedAt ?? item.createdAt;
+      const effectiveDate = item.storyAt ?? item.capturedAt;
+      if (!effectiveDate) {
+        undatedCount += 1;
+        continue;
+      }
       const date = new Date(effectiveDate);
       // Force Asia/Seoul timezone
       const seoulDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
@@ -106,7 +111,7 @@ export async function GET() {
       }))
       .sort((a, b) => b.year - a.year);
 
-    return Response.json({ years });
+    return Response.json({ years, undatedCount });
   } catch (error) {
     return handleApiError(error);
   }

@@ -7,6 +7,7 @@ import type { Prisma } from '@prisma/client';
 const querySchema = z.object({
   year: z.coerce.number().optional(),
   month: z.coerce.number().min(1).max(12).optional(),
+  undated: z.coerce.boolean().optional().default(false),
   type: z.enum(['PHOTO', 'VIDEO']).optional(),
   eventId: z.string().optional(),
   cursor: z.string().optional(),
@@ -36,8 +37,13 @@ export async function GET(request: Request) {
       where.events = { some: { eventId: params.eventId } };
     }
 
-    // Year/month filtering using raw SQL via Prisma
-    if (params.year || params.month) {
+    if (params.undated) {
+      where.storyAt = null;
+      where.capturedAt = null;
+    }
+
+    // Year/month filtering with actual media date only (storyAt/capturedAt)
+    if (!params.undated && (params.year || params.month)) {
       const conditions: Prisma.MediaWhereInput[] = [];
 
       if (params.year) {
